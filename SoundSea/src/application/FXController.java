@@ -136,8 +136,9 @@ public class FXController implements Initializable {
 		if (t != null)
 			t.interrupt();
 		if (task != null) {
+			if(sc !=null)
+				sc.close();
 			task.cancel();
-
 			exec.shutdownNow();
 		}
 
