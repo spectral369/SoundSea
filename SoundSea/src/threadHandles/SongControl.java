@@ -29,13 +29,23 @@ public class SongControl {
 		final URL DOWNLOAD_URL = new URL(song);
 		HttpURLConnection request = (HttpURLConnection) DOWNLOAD_URL.openConnection();
 		request.addRequestProperty("User-Agent",
-				"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0");
+				" Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+		// request.addRequestProperty("Accept", "application/json, text/javascript, */*;
+		// q=0.01");
+		request.addRequestProperty("Accept", "application/json");
+		request.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
+		// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate, br");
+		request.addRequestProperty("Referer", "https://datmusic.xyz/");
+		request.addRequestProperty("Origin", "https://datmusic.xyz");
+		request.addRequestProperty("DNT", "1");
+		request.addRequestProperty("Connection", "keep-alive");
+		request.addRequestProperty("Pragma", "no-cache");
+		request.addRequestProperty("Cache-Control", "no-cache");
 		request.connect();
 		playerStatus = NOTSTARTED;
 		FXController.isFinished = false;
 
 		player = new Player(new BufferedInputStream(request.getInputStream()));
-
 	}
 
 	/**

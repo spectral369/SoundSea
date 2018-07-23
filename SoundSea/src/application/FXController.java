@@ -115,7 +115,7 @@ public class FXController implements Initializable {
 	@FXML
 	private void handleDownloadAction(ActionEvent event) throws IOException, InterruptedException {
 
-		if (songLabelText.getText().isEmpty()) {
+		if (songLabelText.getText().isEmpty()|| FXController.downloadList.size()<1) {
 			return;
 		}
 

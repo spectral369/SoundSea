@@ -67,7 +67,7 @@ public class SearchThread extends Thread {
 				FXController.titleList.remove(0);
 			}
 
-			boolean validSong;
+			boolean validSong = false;
 			image = null;
 			// reset GUI view
 			playButton.setVisible(false);
@@ -95,50 +95,65 @@ public class SearchThread extends Thread {
 			} catch (UnknownHostException uhe) {
 				openMessage();
 			} catch (NullPointerException e) {
-				songLabelText.setText("Song not found");
+				songLabelText.setText("Song not found!");
 			}
 
-			try {
-				songLabelText.setText("[" + FXController.artistList.get(0) + "] " + FXController.titleList.get(0));
-				validSong = true;
-			} catch (IndexOutOfBoundsException e) {
-				songLabelText.setText("Song not found");
-				validSong = false;
-			}
+			if (FXController.artistList.size() < 1) {
+				songLabelText.setText("Error on server's side !");
+				if (FXController.bandArtist != "" || !FXController.bandArtist.isEmpty()) {
 
-			if (validSong) {
-				if (quickDownload) {
-					FXController.downloadSong(progressBar);
-				}
+					while (image == null) {
+						Thread.sleep(500);// countdowntimer
 
-				// if the cover art hasn't been displayed yet, spin until it has
-				while (image == null) {
-					// spin
-				}
-
-				FXController.fileCounter = 0;
-
-				albumArt.setImage(null);
-				loadingImage.setVisible(false);
-				albumArt.setImage(image);
-				playButton.setVisible(true);
-				rightSearch.setVisible(true);
-				leftSearch.setVisible(true);
-
-				if (SongControl.playerStatus == SongControl.PLAYING) {
-					FXController.sc.stop();
-					FXController.exec.shutdownNow();
-					FXController.task.cancel();
-
+					}
+					albumArt.setImage(image);
+					loadingImage.setVisible(false);
 				}
 			} else {
 
-				BufferedImage img = ImageIO.read(getClass().getClassLoader().getResource("resources/placeholder.png"));
-				Image test = SwingFXUtils.toFXImage(img, null);
-				albumArt.setImage(test);
-				loadingImage.setVisible(false);
-				rightSearch.setVisible(false);
-				leftSearch.setVisible(false);
+				try {
+					songLabelText.setText("[" + FXController.artistList.get(0) + "] " + FXController.titleList.get(0));
+					validSong = true;
+				} catch (IndexOutOfBoundsException e) {
+					songLabelText.setText("Song not found!!!!");
+					validSong = false;
+				}
+
+				if (validSong) {
+					if (quickDownload) {
+						FXController.downloadSong(progressBar);
+					}
+
+					// if the cover art hasn't been displayed yet, spin until it has
+					while (image == null) {
+						Thread.sleep(500);
+					}
+
+					FXController.fileCounter = 0;
+
+					albumArt.setImage(null);
+					loadingImage.setVisible(false);
+					albumArt.setImage(image);
+					playButton.setVisible(true);
+					rightSearch.setVisible(true);
+					leftSearch.setVisible(true);
+
+					if (SongControl.playerStatus == SongControl.PLAYING) {
+						FXController.sc.stop();
+						FXController.exec.shutdownNow();
+						FXController.task.cancel();
+
+					}
+				} else {
+
+					BufferedImage img = ImageIO
+							.read(getClass().getClassLoader().getResource("resources/placeholder.png"));
+					Image test = SwingFXUtils.toFXImage(img, null);
+					albumArt.setImage(test);
+					loadingImage.setVisible(false);
+					rightSearch.setVisible(false);
+					leftSearch.setVisible(false);
+				}
 			}
 
 		} catch (IOException | InterruptedException e) {

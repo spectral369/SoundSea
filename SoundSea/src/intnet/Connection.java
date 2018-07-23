@@ -16,8 +16,10 @@ import java.util.regex.Pattern;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import application.FXController;
 import javafx.scene.control.TextArea;
@@ -26,7 +28,7 @@ public class Connection {
 
 	static Charset asciiEncoder = Charset.forName("US-ASCII");
 
-	public static void getSongFromPleer(TextArea songLabelText) throws MalformedURLException, IOException {
+	public static void getSongFromPleer(TextArea songLabelText) throws MalformedURLException {
 
 		String bandArtist;
 		String songTitle;
@@ -58,9 +60,15 @@ public class Connection {
 				+ bandArtist.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "") + "+"
 				+ songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "").replaceAll("\\[.*\\]", "")
 				+ "&page=0";
-
 		final URL url = new URL(fullURLPath);
-		HttpURLConnection request = (HttpURLConnection) url.openConnection();
+		HttpURLConnection request = null;
+
+		try {
+			request = (HttpURLConnection) url.openConnection();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		/// old
 		// request.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT
@@ -68,17 +76,57 @@ public class Connection {
 		// 3.5.30729)");
 		// new
 		/// on my dev machine
+		// request.addRequestProperty("User-Agent",
+		// "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101
+		/// Firefox/59.0");
 		request.addRequestProperty("User-Agent",
-				"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0");
-		request.connect();
+				" Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+		// request.addRequestProperty("Accept", "application/json, text/javascript, */*;
+		// q=0.01");
+		request.addRequestProperty("Accept", "application/json");
+		request.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
+		// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate, br");
+		request.addRequestProperty("Referer", "https://datmusic.xyz/");
+		request.addRequestProperty("Origin", "https://datmusic.xyz");
+		request.addRequestProperty("DNT", "1");
+		request.addRequestProperty("Connection", "keep-alive");
+		request.addRequestProperty("Pragma", "no-cache");
+		request.addRequestProperty("Cache-Control", "no-cache");
+
+		try {
+			request.connect();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		JsonParser jp = new JsonParser();
-		JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent()));
+		JsonElement root = null;
+
+		try {
+
+			InputStream in = request.getInputStream();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+			StringBuilder result = new StringBuilder();
+			String line;
+			while ((line = reader.readLine()) != null) {
+				result.append(line);
+			}
+			// System.out.println(result.toString());
+			root = jp.parse(result.toString());
+		} catch (JsonIOException | JsonSyntaxException | IOException e) {
+			e.printStackTrace();
+			return;
+		}
+
 		JsonObject rootobj = root.getAsJsonObject();
 		JsonElement sts = rootobj.get("status");
-		if (!sts.getAsString().equals("ok"))
-			songLabelText.setText("Song not found");
-		else {
+
+		if (!sts.getAsString().equals("ok")) {
+
+			songLabelText.setText("Song not found !");
+		} else {
 			System.out.println("pirating and drinking rum...");
 
 			JsonArray data = rootobj.get("data").getAsJsonArray();// "0" Data about all songs
@@ -279,7 +327,6 @@ public class Connection {
 		URL url = new URL(fullURLPath);
 		HttpURLConnection request = (HttpURLConnection) url.openConnection();
 		request.connect();
-
 		JsonParser jp = new JsonParser();
 		JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent(), StandardCharsets.UTF_8));
 		JsonObject rootobj = root.getAsJsonObject();
@@ -287,6 +334,7 @@ public class Connection {
 		try {
 			rootobj = arr.get(0).getAsJsonObject();
 		} catch (IndexOutOfBoundsException e) {
+
 			songLabelText.setText("Song not found");
 		}
 
@@ -326,6 +374,7 @@ public class Connection {
 
 		// parse cover art
 		rootobj = arr.get(itunesIndex).getAsJsonObject();
+
 		FXController.coverArtUrl = (rootobj.get("artworkUrl100").toString().replace("\"", "").replace("100x100bb.jpg",
 				"500x500bb.jpg"));
 
