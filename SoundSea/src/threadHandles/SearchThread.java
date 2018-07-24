@@ -138,10 +138,14 @@ public class SearchThread extends Thread {
 					rightSearch.setVisible(true);
 					leftSearch.setVisible(true);
 
-					if (SongControl.playerStatus == SongControl.PLAYING) {
+					if (SongControl.playerStatus == SongControl.PLAYING
+							|| SongControl.playerStatus == SongControl.PAUSED
+							|| SongControl.playerStatus == SongControl.FINISHED) {
 						FXController.sc.stop();
-						FXController.exec.shutdownNow();
+						if (FXController.exec != null)
+							FXController.exec.shutdownNow();
 						FXController.task.cancel();
+						FXController.exec = null;
 
 					}
 				} else {

@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import application.FXController;
+import javafx.scene.control.TextArea;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
@@ -25,7 +26,7 @@ public class SongControl {
 	// status variable what player thread is doing/supposed to do
 	public static int playerStatus = NOTSTARTED;
 
-	public SongControl(String song) throws IOException, JavaLayerException {
+	public SongControl(String song,TextArea songLabelText) throws IOException{
 		final URL DOWNLOAD_URL = new URL(song);
 		HttpURLConnection request = (HttpURLConnection) DOWNLOAD_URL.openConnection();
 		request.addRequestProperty("User-Agent",
@@ -45,7 +46,12 @@ public class SongControl {
 		playerStatus = NOTSTARTED;
 		FXController.isFinished = false;
 
-		player = new Player(new BufferedInputStream(request.getInputStream()));
+		try {
+			player = new Player(new BufferedInputStream(request.getInputStream()));
+		} catch (JavaLayerException e) {
+			// TODO Auto-generated catch block
+			songLabelText.setText("Error playing the song(server's fault)");
+		}
 	}
 
 	/**

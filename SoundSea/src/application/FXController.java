@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
@@ -32,8 +33,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -64,6 +63,12 @@ public class FXController implements Initializable {
 	private Button rightSearch;
 	@FXML
 	private Button leftSearch;
+	@FXML
+	private Button getSearchButton;
+	@FXML
+	private Button downloadButton;
+	@FXML
+	private Button getLyricsButton;
 
 	public static String songFullTitle = "";
 	public static String songTitle = "";
@@ -91,7 +96,7 @@ public class FXController implements Initializable {
 	public static transient boolean isFinished = false;
 	public static CountDownLatch latch = null;
 	public Thread t = null;
-	public static ExecutorService exec = Executors.newSingleThreadExecutor();
+	public static ExecutorService exec = null;
 	public static Task<Void> task = null;
 
 	public static int fileCounter = 0;
@@ -102,20 +107,27 @@ public class FXController implements Initializable {
 		threadHandles.SearchThread st = new threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
 				loadingImage, true, progressBar, playButton, pauseButton, leftSearch, rightSearch);
 		st.start();
+
 	}
 
 	@FXML
 	private void handleSearchAction(ActionEvent event) throws IOException, InterruptedException {
 
+		if (downloadButton.disableProperty().get())
+			downloadButton.disableProperty().setValue(false);
+		if (getLyricsButton.disableProperty().get())
+			getLyricsButton.disableProperty().setValue(false);
+
 		threadHandles.SearchThread st = new threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
 				loadingImage, false, progressBar, playButton, pauseButton, leftSearch, rightSearch);
 		st.start();
+
 	}
 
 	@FXML
 	private void handleDownloadAction(ActionEvent event) throws IOException, InterruptedException {
 
-		if (songLabelText.getText().isEmpty()|| FXController.downloadList.size()<1) {
+		if (songLabelText.getText().isEmpty() || FXController.downloadList.size() < 1) {
 			return;
 		}
 
@@ -136,7 +148,7 @@ public class FXController implements Initializable {
 		if (t != null)
 			t.interrupt();
 		if (task != null) {
-			if(sc !=null)
+			if (sc != null)
 				sc.close();
 			task.cancel();
 			exec.shutdownNow();
@@ -148,6 +160,8 @@ public class FXController implements Initializable {
 	@FXML
 	private void handlePlayButton(ActionEvent event) throws MalformedURLException, IOException, JavaLayerException {
 
+		if (exec == null)
+			exec = Executors.newSingleThreadExecutor();
 		task = new Task<Void>() {
 
 			@Override
@@ -160,9 +174,10 @@ public class FXController implements Initializable {
 						public void run() {
 
 							try {
-								sc = new SongControl(streamList.get(fileCounter));
+								sc = new SongControl(streamList.get(fileCounter), songLabelText);
 
 								currSong = fileCounter;
+
 								sc.play();
 								latch = new CountDownLatch(1);
 
@@ -217,7 +232,7 @@ public class FXController implements Initializable {
 							}
 						});
 
-					}
+					} /* else if(currSong!=fileCounter) */
 
 				});
 				return null;
@@ -230,7 +245,8 @@ public class FXController implements Initializable {
 
 	@FXML
 	private void handlePauseButton(ActionEvent event) throws JavaLayerException {
-		sc.pause();
+		if (sc != null)
+			sc.pause();
 
 		pauseButton.setVisible(false);
 		playButton.setVisible(true);
@@ -261,6 +277,7 @@ public class FXController implements Initializable {
 
 	@FXML
 	private void handleRightSearch(ActionEvent event) throws JavaLayerException {
+
 		if (fileCounter == titleList.size() - 1) {
 			fileCounter = 0;
 		} else {
@@ -331,6 +348,15 @@ public class FXController implements Initializable {
 		rightSearch.setVisible(false);
 		leftSearch.setVisible(false);
 
+		getSearchButton.setDefaultButton(true);
+		downloadButton.disableProperty().setValue(true);
+		getLyricsButton.disableProperty().setValue(true);
+
+		getSearchButton.disableProperty()
+				.bind(Bindings.createBooleanBinding(
+						() -> getSearchField.getText().trim().isEmpty() || getSearchField.getText().trim().length() < 2,
+						getSearchField.textProperty()));
+
 		BufferedImage image = null;
 		try {
 			image = ImageIO.read(getClass().getClassLoader().getResource("resources/placeholder.png"));
@@ -340,13 +366,13 @@ public class FXController implements Initializable {
 		Image test = SwingFXUtils.toFXImage(image, null);
 		albumArt.setImage(test);
 
-		getSearchField.setOnKeyPressed((KeyEvent ke) -> {
-			if (ke.getCode().equals(KeyCode.ENTER)) {
-				threadHandles.SearchThread st = new threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
-						loadingImage, false, progressBar, playButton, pauseButton, leftSearch, rightSearch);
-				st.start();
-			}
-		});
+		/*
+		 * getSearchField.setOnKeyPressed((KeyEvent ke) -> { if
+		 * (ke.getCode().equals(KeyCode.ENTER)) { threadHandles.SearchThread st = new
+		 * threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
+		 * loadingImage, false, progressBar, playButton, pauseButton, leftSearch,
+		 * rightSearch); st.start(); } });
+		 */
 
 	}
 
