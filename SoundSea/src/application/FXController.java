@@ -117,6 +117,8 @@ public class FXController implements Initializable {
 			downloadButton.disableProperty().setValue(false);
 		if (getLyricsButton.disableProperty().get())
 			getLyricsButton.disableProperty().setValue(false);
+		if(SongControl.playerStatus ==  SongControl.PLAYING || SongControl.playerStatus ==  SongControl.PAUSED)
+			sc.stop();
 
 		threadHandles.SearchThread st = new threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
 				loadingImage, false, progressBar, playButton, pauseButton, leftSearch, rightSearch);
@@ -147,12 +149,13 @@ public class FXController implements Initializable {
 	private void handleCloseAction(ActionEvent event) {
 		if (t != null)
 			t.interrupt();
-		if (task != null) {
-			if (sc != null)
-				sc.close();
-			task.cancel();
-			exec.shutdownNow();
+		if (sc != null)
+			sc.close();
+		if (task != null) {	
+			task.cancel();	
 		}
+		if(exec !=null)
+		exec.shutdownNow();
 
 		Platform.exit();
 	}

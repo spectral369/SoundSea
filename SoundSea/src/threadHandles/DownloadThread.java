@@ -4,14 +4,17 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.ID3v23Tag;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.NotSupportedException;
 import com.mpatric.mp3agic.UnsupportedTagException;
+
 import application.FXController;
 import javafx.scene.control.ProgressBar;
 
@@ -19,11 +22,14 @@ public class DownloadThread extends Thread {
 
 	private final ProgressBar progressBar;
 	public static boolean downloading;
+	private BufferedInputStream in;
+	private int size;
 
 	public DownloadThread(String songTitle, ProgressBar progressBar) {
 		this.progressBar = progressBar;
 	}
 
+	@SuppressWarnings("static-access")
 	@Override
 	public void run() {
 		downloading = true;
@@ -53,72 +59,123 @@ public class DownloadThread extends Thread {
 			// download file
 			final URL url = new URL(FXController.downloadList.get(FXController.fileCounter));
 
-			URLConnection urlConnection = url.openConnection();
+			// URLConnection urlConnection = url.openConnection();
+			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+			HttpURLConnection.setFollowRedirects(true);
+			urlConnection.setFollowRedirects(true);
 			urlConnection.addRequestProperty("User-Agent",
-					" Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
-			// request.addRequestProperty("Accept", "application/json, text/javascript, */*;
-			// q=0.01");
-			urlConnection.addRequestProperty("Accept", "application/json");
+					"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+			urlConnection.addRequestProperty("Accept", "application/json, text/javascript, *//*;q=0.01");
+
+			urlConnection.setRequestProperty("Content-Type", "application/json");
+			// urlConnection.addRequestProperty("Accept", "application/json");
 			urlConnection.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
-			// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate, br");
-			urlConnection.addRequestProperty("Referer", "https://datmusic.xyz/");
+			urlConnection.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
+			urlConnection.addRequestProperty("Host", "api-2.datmusic.xyz");
 			urlConnection.addRequestProperty("Origin", "https://datmusic.xyz");
+			urlConnection.addRequestProperty("Referer", "https://datmusic.xyz/");
+
 			urlConnection.addRequestProperty("DNT", "1");
 			urlConnection.addRequestProperty("Connection", "keep-alive");
 			urlConnection.addRequestProperty("Pragma", "no-cache");
 			urlConnection.addRequestProperty("Cache-Control", "no-cache");
+			urlConnection.setRequestMethod("GET");// test
+
 			urlConnection.connect();
+			int responseCode = urlConnection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_OK) {
 
-			int size = urlConnection.getContentLength();
-			// FileUtils.copyURLToFile(url, file);
+				size = urlConnection.getContentLength();
+				in = new BufferedInputStream(urlConnection.getInputStream());
+			} else {
 
-			System.out.println(size);
+				size = urlConnection.getContentLength();
+				// FileUtils.copyURLToFile(url, file);
 
-			BufferedInputStream in = new BufferedInputStream(urlConnection.getInputStream());
-			FileOutputStream fout = new FileOutputStream(tmpDir + "/SongSea/temp.mp3");
-			byte data[] = new byte[1024];
-			int count;
-			double sumCount = 0.0;
+				String ur = urlConnection.getURL().toExternalForm();
+				ur = ur.replaceAll(" ", "%20");// bad way !!!
+				/*
+				 * 
+				 * please use URI uri = new URI( "http", "search.barnesandnoble.com",
+				 * "/booksearch/first book.pdf", null); URL url = uri.toURL();
+				 * 
+				 * or String request = uri.toASCIIString();
+				 */
+				URL url2 = new URL(ur);
+				urlConnection.disconnect();
+				URLConnection downloadURL = url2.openConnection();
 
-			while ((count = in.read(data, 0, 1024)) != -1) {
-				fout.write(data, 0, count);
+				downloadURL.addRequestProperty("User-Agent",
+						"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+				downloadURL.addRequestProperty("Accept", "application/json, text/javascript, *//*;q=0.01");
 
-				sumCount += count;
-				if (size > 0) {
-					progressBar.setProgress(sumCount / size);
+				// downloadURL.setRequestProperty("Content-Type", "application/json");
+				// urlConnection.addRequestProperty("Accept", "application/json");
+				downloadURL.setRequestProperty("Content-Type", "File");
+				downloadURL.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
+				downloadURL.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
+				downloadURL.addRequestProperty("Host", "api-2.datmusic.xyz");
+				downloadURL.addRequestProperty("Origin", "https://datmusic.xyz");
+				downloadURL.addRequestProperty("Referer", "https://datmusic.xyz/");
+
+				downloadURL.addRequestProperty("DNT", "1");
+				downloadURL.addRequestProperty("Connection", "keep-alive");
+				downloadURL.addRequestProperty("Pragma", "no-cache");
+				downloadURL.addRequestProperty("Cache-Control", "no-cache");
+
+				downloadURL.connect();
+				
+				int size = downloadURL.getContentLength();
+				System.out.println(size);
+
+				in = new BufferedInputStream(downloadURL.getInputStream());
+			}
+
+			if (in.available() > 0) {
+				FileOutputStream fout = new FileOutputStream(tmpDir + "/SongSea/temp.mp3");
+				byte data[] = new byte[1024];
+				int count;
+				double sumCount = 0.0;
+
+				while ((count = in.read(data, 0, 1024)) != -1) {
+					fout.write(data, 0, count);
+
+					sumCount += count;
+					if (size > 0) {
+						progressBar.setProgress(sumCount / size);
+					}
 				}
+
+				Mp3File mp3file = new Mp3File(tmpDir + "/SongSea/temp.mp3");
+				mp3file.removeId3v1Tag();
+				mp3file.removeId3v2Tag();
+
+				// insert metadata
+				ID3v2 id3v2Tag = new ID3v23Tag();
+				mp3file.setId3v2Tag(id3v2Tag);
+				id3v2Tag.setArtist(bandArtist);
+				id3v2Tag.setTitle(songTitle);
+				if (!"".equals(FXController.albumTitle)) {
+					id3v2Tag.setAlbum(albumTitle);
+				}
+				id3v2Tag.setYear(albumYear);
+				try {
+					id3v2Tag.setGenreDescription(genre);
+				} catch (IllegalArgumentException e) {
+					System.err.println("Can't set genre");
+				}
+				id3v2Tag.setAlbumImage(coverArt, "image/jpeg");
+
+				mp3file.save(FXController.folderDirectory + songTitle + ".mp3");
+
+				new File(tmpDir + "/SongSea").delete();
+
+				progressBar.setVisible(false);
+				progressBar.setProgress(0);
+				downloading = false;
+				fout.close();
+				in.close();
 			}
-
-			Mp3File mp3file = new Mp3File(tmpDir + "/SongSea/temp.mp3");
-			mp3file.removeId3v1Tag();
-			mp3file.removeId3v2Tag();
-
-			// insert metadata
-			ID3v2 id3v2Tag = new ID3v23Tag();
-			mp3file.setId3v2Tag(id3v2Tag);
-			id3v2Tag.setArtist(bandArtist);
-			id3v2Tag.setTitle(songTitle);
-			if (!"".equals(FXController.albumTitle)) {
-				id3v2Tag.setAlbum(albumTitle);
-			}
-			id3v2Tag.setYear(albumYear);
-			try {
-				id3v2Tag.setGenreDescription(genre);
-			} catch (IllegalArgumentException e) {
-				System.err.println("Can't set genre");
-			}
-			id3v2Tag.setAlbumImage(coverArt, "image/jpeg");
-
-			mp3file.save(FXController.folderDirectory + songTitle + ".mp3");
-
-			new File(tmpDir + "/SongSea").delete();
-
-			progressBar.setVisible(false);
-			progressBar.setProgress(0);
-			downloading = false;
-			fout.close();
-			in.close();
-
 		} catch (IOException | UnsupportedTagException | InvalidDataException | NotSupportedException e) {
 			e.printStackTrace();
 		}

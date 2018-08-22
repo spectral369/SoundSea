@@ -61,6 +61,7 @@ public class Connection {
 				+ songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "").replaceAll("\\[.*\\]", "")
 				+ "&page=0";
 		final URL url = new URL(fullURLPath);
+	
 		HttpURLConnection request = null;
 
 		try {
@@ -142,12 +143,13 @@ public class Connection {
 			List<String> download = new ArrayList<>();
 			// artist,title,duration,download,stream
 			for (int i = 0; i < data.size(); i++) {
-				artist.add(songData.get(i).get("artist").getAsString());
-				title.add(songData.get(i).get("title").getAsString());
-				stream.add(songData.get(i).get("stream").getAsString());
-				download.add(songData.get(i).get("download").getAsString());
+				artist.add(songData.get(i).get("artist").getAsString().trim());
+				title.add(songData.get(i).get("title").getAsString().trim());
+				stream.add(songData.get(i).get("stream").getAsString().trim());
+				download.add(songData.get(i).get("download").getAsString().trim());
+				
 			}
-
+		
 			FXController.artistList = (artist);
 			FXController.titleList = (title);
 			FXController.streamList = (stream);
@@ -319,7 +321,7 @@ public class Connection {
 		 */
 	}
 
-	public static void getiTunesSongInfo(String songInfoQuery, TextArea songLabelText)
+	public static boolean getiTunesSongInfo(String songInfoQuery, TextArea songLabelText)
 			throws MalformedURLException, IOException {
 
 		String fullURLPath = "https://itunes.apple.com/search?term=" + songInfoQuery.replace(" ", "+");
@@ -330,6 +332,12 @@ public class Connection {
 		JsonParser jp = new JsonParser();
 		JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent(), StandardCharsets.UTF_8));
 		JsonObject rootobj = root.getAsJsonObject();
+		// "resultCount":0,
+		JsonElement resultCount =  rootobj.get("resultCount");
+		if(resultCount.getAsInt()<1) {
+			songLabelText.setText("Song not found");
+			return false;
+		}else {
 		JsonArray arr = rootobj.getAsJsonArray("results");
 		try {
 			rootobj = arr.get(0).getAsJsonObject();
@@ -379,6 +387,8 @@ public class Connection {
 				"500x500bb.jpg"));
 
 		FXController.songFullTitle = FXController.bandArtist + " - " + FXController.songTitle;
+		return true;
+		}
 
 	}
 

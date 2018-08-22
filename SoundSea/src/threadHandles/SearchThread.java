@@ -83,13 +83,14 @@ public class SearchThread extends Thread {
 			// parse itunes info for song
 			String songInfoQuery = getSearchField.getText();
 			try {
-				Connection.getiTunesSongInfo(songInfoQuery, songLabelText);
+				boolean isValidSong = Connection.getiTunesSongInfo(songInfoQuery, songLabelText);
 
 				// grab cover art image
 				CoverArtThread cat = new CoverArtThread();
 				cat.start();
 
 				// get download link for song
+				if(isValidSong)
 				Connection.getSongFromPleer(songLabelText);
 
 			} catch (UnknownHostException uhe) {
@@ -99,16 +100,16 @@ public class SearchThread extends Thread {
 			}
 
 			if (FXController.artistList.size() < 1) {
-				songLabelText.setText("Error on server's side !");
-				if (FXController.bandArtist != "" || !FXController.bandArtist.isEmpty()) {
+			//	songLabelText.setText("Song not found or Error on server's side !");
+				//if (FXController.bandArtist != "" || !FXController.bandArtist.isEmpty()) {
 
 					while (image == null) {
-						Thread.sleep(500);// countdowntimer
+						Thread.sleep(600);// countdowntimer
 
 					}
 					albumArt.setImage(image);
 					loadingImage.setVisible(false);
-				}
+				//}
 			} else {
 
 				try {
