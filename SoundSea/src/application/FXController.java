@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
+import intnet.Connection;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
@@ -40,7 +41,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javazoom.jl.decoder.JavaLayerException;
+import threadHandles.CoverArtThread;
 import threadHandles.DownloadThread;
+import threadHandles.SearchThread;
 import threadHandles.SongControl;
 
 public class FXController implements Initializable {
@@ -117,7 +120,7 @@ public class FXController implements Initializable {
 			downloadButton.disableProperty().setValue(false);
 		if (getLyricsButton.disableProperty().get())
 			getLyricsButton.disableProperty().setValue(false);
-		if(SongControl.playerStatus ==  SongControl.PLAYING || SongControl.playerStatus ==  SongControl.PAUSED)
+		if (SongControl.playerStatus == SongControl.PLAYING || SongControl.playerStatus == SongControl.PAUSED)
 			sc.stop();
 
 		threadHandles.SearchThread st = new threadHandles.SearchThread(getSearchField, songLabelText, albumArt,
@@ -147,15 +150,17 @@ public class FXController implements Initializable {
 
 	@FXML
 	private void handleCloseAction(ActionEvent event) {
+		if (sc != null) {
+			sc.stop();
+			sc.close();
+		}
 		if (t != null)
 			t.interrupt();
-		if (sc != null)
-			sc.close();
-		if (task != null) {	
-			task.cancel();	
+		if (task != null) {
+			task.cancel();
 		}
-		if(exec !=null)
-		exec.shutdownNow();
+		if (exec != null)
+			exec.shutdownNow();
 
 		Platform.exit();
 	}
@@ -257,18 +262,24 @@ public class FXController implements Initializable {
 	}
 
 	@FXML
-	private void handleLeftSearch(ActionEvent event) throws JavaLayerException {
-
+	private void handleLeftSearch(ActionEvent event) throws JavaLayerException, InterruptedException {
+		rightSearch.disableProperty().setValue(true);
+		leftSearch.disableProperty().setValue(true);
+		playButton.disableProperty().setValue(true);
+		loadingImage.disableProperty().setValue(true);
 		if (fileCounter == 0) {
 			fileCounter = titleList.size() - 1;
 		} else {
 			fileCounter--;
 		}
 		System.out.println(fileCounter);
-		if (sc != null)
+		if (sc != null) {
+			sc.stop();
 			sc.close();
-		if (task != null)
+		}
+		if (task != null) {
 			task.cancel();
+		}
 
 		playButton.setVisible(true);
 		pauseButton.setVisible(false);
@@ -276,19 +287,44 @@ public class FXController implements Initializable {
 		// fullTitleList.get(fileCounter));
 		songLabelText.setText("[" + artistList.get(fileCounter) + "] " + titleList.get(fileCounter));
 		songLabelText.setTooltip(new Tooltip(artistList.get(fileCounter) + "-" + titleList.get(fileCounter)));
+		String query = FXController.artistList.get(fileCounter) + "+" + FXController.titleList.get(fileCounter);
+		try {
+			boolean isValidSong = Connection.getiTunesSongInfo(query, songLabelText);
+			if (isValidSong) {
+				CoverArtThread cat = new CoverArtThread();
+				SearchThread.image = null;
+				cat.start();
+				while (SearchThread.image == null)
+					Thread.sleep(300);// countdowntimer
+				loadingImage.disableProperty().setValue(false);
+				albumArt.setImage(SearchThread.image);
+			}
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		rightSearch.disableProperty().setValue(false);
+		leftSearch.disableProperty().setValue(false);
+		playButton.disableProperty().setValue(false);
 	}
 
 	@FXML
-	private void handleRightSearch(ActionEvent event) throws JavaLayerException {
-
+	private void handleRightSearch(ActionEvent event) throws JavaLayerException, InterruptedException {
+		rightSearch.disableProperty().setValue(true);
+		leftSearch.disableProperty().setValue(true);
+		playButton.disableProperty().setValue(true);
+		loadingImage.disableProperty().setValue(true);
 		if (fileCounter == titleList.size() - 1) {
 			fileCounter = 0;
 		} else {
 			fileCounter++;
 		}
 		System.out.println(fileCounter);
-		if (sc != null)
+		if (sc != null) {
+			sc.stop();
 			sc.close();
+		}
 		if (task != null)
 			task.cancel();
 
@@ -297,6 +333,25 @@ public class FXController implements Initializable {
 
 		songLabelText.setText("[" + artistList.get(fileCounter) + "] " + titleList.get(fileCounter));
 		songLabelText.setTooltip(new Tooltip(artistList.get(fileCounter) + "-" + titleList.get(fileCounter)));
+		String query = FXController.artistList.get(fileCounter) + "+" + FXController.titleList.get(fileCounter);
+		try {
+			boolean isValidSong = Connection.getiTunesSongInfo(query, songLabelText);
+			if (isValidSong) {
+				CoverArtThread cat = new CoverArtThread();
+				SearchThread.image = null;
+				cat.start();
+				while (SearchThread.image == null)
+					Thread.sleep(300);// countdowntimer
+				loadingImage.disableProperty().setValue(false);
+				albumArt.setImage(SearchThread.image);
+			}
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		rightSearch.disableProperty().setValue(false);
+		leftSearch.disableProperty().setValue(false);
+		playButton.disableProperty().setValue(false);
 	}
 
 	@FXML

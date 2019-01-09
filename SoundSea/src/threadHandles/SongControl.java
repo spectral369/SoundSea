@@ -36,9 +36,9 @@ public class SongControl {
 		request.addRequestProperty("Accept", "application/json");
 		request.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
 		// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate, br");
-		request.addRequestProperty("Referer", "https://datmusic.xyz/");
-		request.addRequestProperty("Origin", "https://datmusic.xyz");
-		request.addRequestProperty("DNT", "1");
+	//	request.addRequestProperty("Referer", "https://datmusic.xyz/");
+		//request.addRequestProperty("Origin", "https://datmusic.xyz");
+	//	request.addRequestProperty("DNT", "1");
 		request.addRequestProperty("Connection", "keep-alive");
 		request.addRequestProperty("Pragma", "no-cache");
 		request.addRequestProperty("Cache-Control", "no-cache");

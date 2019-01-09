@@ -58,28 +58,28 @@ public class DownloadThread extends Thread {
 
 			// download file
 			final URL url = new URL(FXController.downloadList.get(FXController.fileCounter));
-
+		
 			// URLConnection urlConnection = url.openConnection();
 			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 			HttpURLConnection.setFollowRedirects(true);
 			urlConnection.setFollowRedirects(true);
 			urlConnection.addRequestProperty("User-Agent",
-					"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
-			urlConnection.addRequestProperty("Accept", "application/json, text/javascript, *//*;q=0.01");
+					"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0");
+			//urlConnection.addRequestProperty("Accept", "application/json, text/javascript, *//*;q=0.01");
 
-			urlConnection.setRequestProperty("Content-Type", "application/json");
+		//	urlConnection.setRequestProperty("Content-Type", "application/json");
 			// urlConnection.addRequestProperty("Accept", "application/json");
 			urlConnection.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
-			urlConnection.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
-			urlConnection.addRequestProperty("Host", "api-2.datmusic.xyz");
-			urlConnection.addRequestProperty("Origin", "https://datmusic.xyz");
-			urlConnection.addRequestProperty("Referer", "https://datmusic.xyz/");
+			//urlConnection.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
+			//urlConnection.addRequestProperty("Host", "api-2.datmusic.xyz");
+			//urlConnection.addRequestProperty("Origin", "https://datmusic.xyz");
+			//urlConnection.addRequestProperty("Referer", "https://datmusic.xyz/");
 
 			urlConnection.addRequestProperty("DNT", "1");
 			urlConnection.addRequestProperty("Connection", "keep-alive");
 			urlConnection.addRequestProperty("Pragma", "no-cache");
 			urlConnection.addRequestProperty("Cache-Control", "no-cache");
-			urlConnection.setRequestMethod("GET");// test
+			//urlConnection.setRequestMethod("GET");// test
 
 			urlConnection.connect();
 			int responseCode = urlConnection.getResponseCode();
@@ -106,7 +106,7 @@ public class DownloadThread extends Thread {
 				URLConnection downloadURL = url2.openConnection();
 
 				downloadURL.addRequestProperty("User-Agent",
-						"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+						"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0");
 				downloadURL.addRequestProperty("Accept", "application/json, text/javascript, *//*;q=0.01");
 
 				// downloadURL.setRequestProperty("Content-Type", "application/json");
@@ -114,9 +114,9 @@ public class DownloadThread extends Thread {
 				downloadURL.setRequestProperty("Content-Type", "File");
 				downloadURL.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
 				downloadURL.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
-				downloadURL.addRequestProperty("Host", "api-2.datmusic.xyz");
-				downloadURL.addRequestProperty("Origin", "https://datmusic.xyz");
-				downloadURL.addRequestProperty("Referer", "https://datmusic.xyz/");
+				//downloadURL.addRequestProperty("Host", "api-2.datmusic.xyz");
+			//	downloadURL.addRequestProperty("Origin", "https://datmusic.xyz");
+			//	downloadURL.addRequestProperty("Referer", "https://datmusic.xyz/");
 
 				downloadURL.addRequestProperty("DNT", "1");
 				downloadURL.addRequestProperty("Connection", "keep-alive");
@@ -166,7 +166,7 @@ public class DownloadThread extends Thread {
 				}
 				id3v2Tag.setAlbumImage(coverArt, "image/jpeg");
 
-				mp3file.save(FXController.folderDirectory + songTitle + ".mp3");
+				mp3file.save(FXController.folderDirectory +bandArtist+"-"+ songTitle + ".mp3");
 
 				new File(tmpDir + "/SongSea").delete();
 
@@ -175,6 +175,7 @@ public class DownloadThread extends Thread {
 				downloading = false;
 				fout.close();
 				in.close();
+			//	this.interrupt();//test
 			}
 		} catch (IOException | UnsupportedTagException | InvalidDataException | NotSupportedException e) {
 			e.printStackTrace();

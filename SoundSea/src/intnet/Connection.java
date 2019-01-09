@@ -4,15 +4,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,46 +29,52 @@ public class Connection {
 
 	static Charset asciiEncoder = Charset.forName("US-ASCII");
 
-	public static void getSongFromPleer(TextArea songLabelText) throws MalformedURLException {
+	public static boolean getSongFromPleer(TextArea songLabelText, String song) throws MalformedURLException {
 
-		String bandArtist;
-		String songTitle;
-
-		// these top two dont do anyhting
-		bandArtist = deAccent(FXController.bandArtist);
-		songTitle = deAccent(FXController.songTitle);
-
-		if (FXController.bandArtist.contains("feat")) {
-			bandArtist = FXController.bandArtist.split("feat")[0];
-		}
-		if (FXController.songTitle.contains("feat")) {
-			songTitle = FXController.songTitle.split("feat")[0];
-		}
-		if (FXController.bandArtist.contains("Feat")) {
-			bandArtist = FXController.bandArtist.split("feat")[0];
-		}
-		if (FXController.songTitle.contains("Feat")) {
-			songTitle = FXController.songTitle.split("feat")[0];
-		}
+		/*
+		 * String bandArtist = deAccent(FXController.bandArtist); String songTitle =
+		 * deAccent(FXController.songTitle);
+		 * 
+		 * if (FXController.bandArtist.contains("feat")) { bandArtist =
+		 * FXController.bandArtist.split("feat")[0]; } if
+		 * (FXController.songTitle.contains("feat")) { songTitle =
+		 * FXController.songTitle.split("feat")[0]; } if
+		 * (FXController.bandArtist.contains("Feat")) { bandArtist =
+		 * FXController.bandArtist.split("feat")[0]; } if
+		 * (FXController.songTitle.contains("Feat")) { songTitle =
+		 * FXController.songTitle.split("feat")[0]; }
+		 */
 		/// old
 		// String fullURLPath =
 		/// "http://www.pleer.com/browser-extension/search?limit=100&q=" +
 		/// bandArtist.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "") + "+" +
 		/// songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]",
 		/// "").replaceAll("\\[.*\\]", "");
-		/// new
-		String fullURLPath = "https://api-2.datmusic.xyz/search?q="
-				+ bandArtist.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "") + "+"
-				+ songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "").replaceAll("\\[.*\\]", "")
-				+ "&page=0";
+		/// new1
+		/*
+		 * String fullURLPath = "https://api-2.datmusic.xyz/search?q=" +
+		 * bandArtist.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "") + "+" +
+		 * songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]",
+		 * "").replaceAll("\\[.*\\]", "") + "&page=0";
+		 */
+
+		/*
+		 * String fullURLPath = "https://slider.kz/vk_auth.php?q=" +
+		 * bandArtist.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "")+ "+" +
+		 * songTitle.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]",
+		 * "").replaceAll("\\[.*\\]", "");
+		 */
+		String fullURLPath = "https://slider.kz/vk_auth.php?q="
+				+ song.replace(" ", "+").replaceAll("[!@#$%^&*(){}:\"<>?]", "");
+
 		final URL url = new URL(fullURLPath);
-	
+
 		HttpURLConnection request = null;
 
 		try {
 			request = (HttpURLConnection) url.openConnection();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 
@@ -81,24 +88,28 @@ public class Connection {
 		// "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101
 		/// Firefox/59.0");
 		request.addRequestProperty("User-Agent",
-				" Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+				"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0");
 		// request.addRequestProperty("Accept", "application/json, text/javascript, */*;
 		// q=0.01");
-		request.addRequestProperty("Accept", "application/json");
+
+		// request.addRequestProperty("Accept", "application/json");
 		request.addRequestProperty("Accept-Language", "en-GB,en;q=0.5");
-		// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate, br");
-		request.addRequestProperty("Referer", "https://datmusic.xyz/");
-		request.addRequestProperty("Origin", "https://datmusic.xyz");
+
+		// request.addRequestProperty("Accept-Encoding" ,"gzip, deflate");
+		///// request.addRequestProperty("Referer", "https://datmusic.xyz/");
+		// request.addRequestProperty("Origin", "https://datmusic.xyz");
 		request.addRequestProperty("DNT", "1");
+		// request.addRequestProperty("Host","slider.kz");
 		request.addRequestProperty("Connection", "keep-alive");
 		request.addRequestProperty("Pragma", "no-cache");
+		// request.addRequestProperty("Upgrade-Insecure-Requests","1");
 		request.addRequestProperty("Cache-Control", "no-cache");
 
 		try {
 			request.connect();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 
@@ -112,25 +123,36 @@ public class Connection {
 			StringBuilder result = new StringBuilder();
 			String line;
 			while ((line = reader.readLine()) != null) {
-				result.append(line);
+				if (!line.isEmpty()) {
+					result.append(line);
+
+				}
 			}
-			// System.out.println(result.toString());
+
 			root = jp.parse(result.toString());
 		} catch (JsonIOException | JsonSyntaxException | IOException e) {
 			e.printStackTrace();
-			return;
+
+			throw new IllegalStateException("Server error 504.");
+			// return;
 		}
 
 		JsonObject rootobj = root.getAsJsonObject();
-		JsonElement sts = rootobj.get("status");
+		JsonElement sts = rootobj.get("audios");// orig status
 
-		if (!sts.getAsString().equals("ok")) {
+		// if (!sts.getAsString().equals("ok")) {
+		if (sts.isJsonNull() || sts == null) {
 
 			songLabelText.setText("Song not found !");
 		} else {
 			System.out.println("pirating and drinking rum...");
 
-			JsonArray data = rootobj.get("data").getAsJsonArray();// "0" Data about all songs
+			JsonObject dataobj = rootobj.getAsJsonObject().getAsJsonObject("audios");
+
+			Set<String> keys = dataobj.keySet();
+			String key = keys.iterator().next();
+
+			JsonArray data = dataobj.getAsJsonArray(key);
 
 			List<JsonObject> songData = new ArrayList<>();
 			for (int i = 0; i < data.size(); i++) {
@@ -143,19 +165,35 @@ public class Connection {
 			List<String> download = new ArrayList<>();
 			// artist,title,duration,download,stream
 			for (int i = 0; i < data.size(); i++) {
-				artist.add(songData.get(i).get("artist").getAsString().trim());
-				title.add(songData.get(i).get("title").getAsString().trim());
-				stream.add(songData.get(i).get("stream").getAsString().trim());
-				download.add(songData.get(i).get("download").getAsString().trim());
-				
+				artist.add(songData.get(i).get("tit_art").getAsString().trim().substring(0,
+						songData.get(i).get("tit_art").getAsString().trim().indexOf(" - ")));
+				title.add(songData.get(i).get("tit_art").getAsString().trim()
+						.substring(songData.get(i).get("tit_art").getAsString().trim().indexOf(" - ") + 1));
+				String url1 = null;
+				try {
+					url1 = URLEncoder.encode(songData.get(i).get("tit_art").getAsString().trim(), "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+
+					url1 = songData.get(i).get("tit_art").getAsString().trim().replaceAll(" ", "%");
+				}
+				download.add("http://slider.kz/download/" + songData.get(i).get("id").getAsString().trim() + "/" + key
+						+ "/" + songData.get(i).get("url").getAsString().trim() + "/" + url1 + ".mp3?extra="
+						+ songData.get(i).get("extra").toString().trim().substring(1,
+								songData.get(i).get("extra").toString().trim().length() - 1));
+
+				stream.add("http://slider.kz/download/" + songData.get(i).get("id").getAsString().trim() + "/" + key
+						+ "/" + songData.get(i).get("url").getAsString().trim() + "/" + url1 + ".mp3?extra="
+						+ songData.get(i).get("extra").toString().trim().substring(1,
+								songData.get(i).get("extra").toString().trim().length() - 1));
+
 			}
-		
+
 			FXController.artistList = (artist);
 			FXController.titleList = (title);
 			FXController.streamList = (stream);
 			FXController.downloadList = (download);
 		} // added last
-
+		return true;
 		/*
 		 * 
 		 * List<String> fileList = new ArrayList<>(); List<String> fullTitleList = new
@@ -333,61 +371,62 @@ public class Connection {
 		JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent(), StandardCharsets.UTF_8));
 		JsonObject rootobj = root.getAsJsonObject();
 		// "resultCount":0,
-		JsonElement resultCount =  rootobj.get("resultCount");
-		if(resultCount.getAsInt()<1) {
+		JsonElement resultCount = rootobj.get("resultCount");
+
+		if (resultCount.getAsInt() < 1) {
 			songLabelText.setText("Song not found");
 			return false;
-		}else {
-		JsonArray arr = rootobj.getAsJsonArray("results");
-		try {
-			rootobj = arr.get(0).getAsJsonObject();
-		} catch (IndexOutOfBoundsException e) {
-
-			songLabelText.setText("Song not found");
-		}
-
-		int itunesIndex = 0;
-		String test = "";
-		do {
+		} else {
+			JsonArray arr = rootobj.getAsJsonArray("results");
 			try {
-				rootobj = arr.get(itunesIndex).getAsJsonObject();
+				rootobj = arr.get(0).getAsJsonObject();
 			} catch (IndexOutOfBoundsException e) {
+
 				songLabelText.setText("Song not found");
 			}
-			test = (rootobj.get("kind").toString().replace("\"", ""));
-			itunesIndex++;
-		} while (!test.equals("song"));
 
-		itunesIndex--;
+			int itunesIndex = 0;
+			String test = "";
+			do {
+				try {
+					rootobj = arr.get(itunesIndex).getAsJsonObject();
+				} catch (IndexOutOfBoundsException e) {
+					songLabelText.setText("Song not found");
+				}
+				test = (rootobj.get("kind").toString().replace("\"", ""));
+				itunesIndex++;
+			} while(!test.equals("song") && itunesIndex<3);//while (!test.equals("song"));
 
-		// parse artist
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
-		FXController.bandArtist = (rootobj.get("artistName").toString().replace("\"", ""));
+			itunesIndex--;
 
-		// parse song title
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
-		FXController.songTitle = (rootobj.get("trackName").toString().replace("\"", ""));
+			// parse artist
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
+			FXController.bandArtist = (rootobj.get("artistName").toString().replace("\"", ""));
 
-		// parse album title
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
-		FXController.albumTitle = (rootobj.get("collectionName").toString().replace("\"", ""));
+			// parse song title
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
+			FXController.songTitle = (rootobj.get("trackName").toString().replace("\"", ""));
 
-		// parse year
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
-		FXController.albumYear = (rootobj.get("releaseDate").toString().replace("\"", "").substring(0, 4));
+			// parse album title
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
+			FXController.albumTitle = (rootobj.get("collectionName").toString().replace("\"", ""));
 
-		// parse genre
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
-		FXController.genre = (rootobj.get("primaryGenreName").toString().replace("\"", ""));
+			// parse year
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
+			FXController.albumYear = (rootobj.get("releaseDate").toString().replace("\"", "").substring(0, 4));
 
-		// parse cover art
-		rootobj = arr.get(itunesIndex).getAsJsonObject();
+			// parse genre
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
+			FXController.genre = (rootobj.get("primaryGenreName").toString().replace("\"", ""));
 
-		FXController.coverArtUrl = (rootobj.get("artworkUrl100").toString().replace("\"", "").replace("100x100bb.jpg",
-				"500x500bb.jpg"));
+			// parse cover art
+			rootobj = arr.get(itunesIndex).getAsJsonObject();
 
-		FXController.songFullTitle = FXController.bandArtist + " - " + FXController.songTitle;
-		return true;
+			FXController.coverArtUrl = (rootobj.get("artworkUrl100").toString().replace("\"", "")
+					.replace("100x100bb.jpg", "500x500bb.jpg"));
+
+			FXController.songFullTitle = FXController.bandArtist + " - " + FXController.songTitle;
+			return true;
 		}
 
 	}
@@ -426,10 +465,11 @@ public class Connection {
 		return sb.toString().trim();
 	}
 
-	private static String deAccent(String str) {
-		String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
-		Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-		return pattern.matcher(nfdNormalizedString).replaceAll("");
-	}
+	/*
+	 * private static String deAccent(String str) { String nfdNormalizedString =
+	 * Normalizer.normalize(str, Normalizer.Form.NFD); Pattern pattern =
+	 * Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); return
+	 * pattern.matcher(nfdNormalizedString).replaceAll(""); }
+	 */
 
 }

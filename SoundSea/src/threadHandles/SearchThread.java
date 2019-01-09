@@ -81,37 +81,52 @@ public class SearchThread extends Thread {
 			leftSearch.setVisible(false);
 
 			// parse itunes info for song
-			String songInfoQuery = getSearchField.getText();
+			String songInfoQuery = getSearchField.getText().replaceAll("[!@#$%^&*(){}:\"<>?]", "");
 			try {
-				boolean isValidSong = Connection.getiTunesSongInfo(songInfoQuery, songLabelText);
+
+				boolean isSongFound = Connection.getSongFromPleer(songLabelText, songInfoQuery);
+
+				boolean isValidSong = false;
+				if (isSongFound) {
+					String query = FXController.artistList.get(0).replace("-", "").trim() + " "
+							+ FXController.titleList.get(0).replace("-", "").trim();
+
+					isValidSong = Connection.getiTunesSongInfo(query, songLabelText);
+
+				}
 
 				// grab cover art image
-				CoverArtThread cat = new CoverArtThread();
-				cat.start();
-
+				if (isValidSong) {
+					CoverArtThread cat = new CoverArtThread();
+					cat.start();
+				}
 				// get download link for song
-				if(isValidSong)
-				Connection.getSongFromPleer(songLabelText);
+				// if(isValidSong)
 
 			} catch (UnknownHostException uhe) {
 				openMessage();
 			} catch (NullPointerException e) {
 				songLabelText.setText("Song not found!");
+			} catch (IllegalStateException ex) {
+				songLabelText.setText("Server Side Error. Please try again later");
 			}
 
 			if (FXController.artistList.size() < 1) {
-			//	songLabelText.setText("Song not found or Error on server's side !");
-				//if (FXController.bandArtist != "" || !FXController.bandArtist.isEmpty()) {
+				// songLabelText.setText("Song not found or Error on server's side !");
+				// if (FXController.bandArtist != "" || !FXController.bandArtist.isEmpty()) {
 
-					while (image == null) {
-						Thread.sleep(600);// countdowntimer
+				while (image == null) {
+					Thread.sleep(600);// countdowntimer
 
-					}
-					albumArt.setImage(image);
-					loadingImage.setVisible(false);
-				//}
+				}
+				albumArt.setImage(image);
+				loadingImage.setVisible(false);
+				// }
 			} else {
-
+				// if the cover art hasn't been displayed yet, spin until it has
+				while (image == null) {
+					Thread.sleep(500);
+				}
 				try {
 					songLabelText.setText("[" + FXController.artistList.get(0) + "] " + FXController.titleList.get(0));
 					validSong = true;
@@ -125,10 +140,10 @@ public class SearchThread extends Thread {
 						FXController.downloadSong(progressBar);
 					}
 
-					// if the cover art hasn't been displayed yet, spin until it has
-					while (image == null) {
-						Thread.sleep(500);
-					}
+					/*
+					 * // if the cover art hasn't been displayed yet, spin until it has while (image
+					 * == null) { Thread.sleep(500); }
+					 */
 
 					FXController.fileCounter = 0;
 
